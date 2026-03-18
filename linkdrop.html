@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LinkDrop">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz48cmVjdCB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMicgcng9JzExNScgZmlsbD0nIzAwMCcvPjx0ZXh0IHg9JzI1NicgeT0nMzQwJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyBmb250LXNpemU9JzI4MCcgZm9udC1mYW1pbHk9J3N5c3RlbS11aScgZmlsbD0nI2YwZTA0MCc+4pa2PC90ZXh0Pjwvc3ZnPg==">
+<title>LinkDrop</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+:root{
+  --bg:#000;--bg2:#1c1c1e;--bg3:#2c2c2e;--bg4:#3a3a3c;
+  --sep:rgba(255,255,255,0.08);
+  --text:#fff;--text2:rgba(255,255,255,0.55);--text3:rgba(255,255,255,0.28);
+  --accent:#f0e040;--accent-rgb:240,224,64;
+  --blue:#0a84ff;--red:#ff453a;--green:#30d158;
+  --r:14px;
+  --font:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
+  --safe-top:env(safe-area-inset-top,44px);
+  --safe-bot:env(safe-area-inset-bottom,20px);
+  --tab-h:49px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+
+/* ── NAV ── */
+#top-nav{
+  flex-shrink:0;padding-top:var(--safe-top);
+  background:rgba(0,0,0,0.88);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:0.5px solid var(--sep);z-index:20;
+}
+.nav-bar{height:44px;display:flex;align-items:center;padding:0 8px}
+.nav-title{flex:1;text-align:center;font-size:17px;font-weight:600;letter-spacing:-.02em}
+.nav-icon-btn{
+  min-width:44px;min-height:44px;background:none;border:none;
+  color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;
+}
+.nav-icon-btn:active{background:rgba(255,255,255,.08)}
+.search-row{padding:6px 12px 10px}
+.sf-wrap{background:var(--bg3);border-radius:12px;display:flex;align-items:center;gap:8px;padding:8px 12px}
+.sf-wrap svg{opacity:.4;flex-shrink:0;width:15px;height:15px}
+.sf-input{flex:1;background:none;border:none;color:var(--text);font-family:var(--font);font-size:15px;outline:none}
+.sf-input::placeholder{color:var(--text3)}
+
+/* ── PAGE TABS (Videos / Images) ── */
+.page-tabs{display:flex;gap:0;padding:0 12px 10px;flex-shrink:0}
+.ptab{
+  flex:1;background:var(--bg3);border:none;border-radius:10px;
+  padding:8px;font-family:var(--font);font-size:14px;font-weight:500;
+  color:var(--text2);cursor:pointer;transition:all .15s;
+}
+.ptab:first-child{border-radius:10px 0 0 10px}
+.ptab:last-child{border-radius:0 10px 10px 0}
+.ptab.on{background:rgba(var(--accent-rgb),.18);color:var(--accent)}
+.ptab:active{opacity:.7}
+
+/* ── FILTER CHIPS ── */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 12px 10px;scrollbar-width:none;flex-shrink:0}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;background:var(--bg3);border:none;border-radius:999px;padding:5px 13px;font-family:var(--font);font-size:12px;color:var(--text2);cursor:pointer;-webkit-user-select:none;user-select:none;transition:all .15s}
+.chip:active{opacity:.6}
+.chip.on{background:rgba(var(--accent-rgb),.15);color:var(--accent)}
+
+/* ── SCROLL ── */
+#scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overflow-x:hidden}
+#scroll-inner{padding-bottom:calc(var(--tab-h) + var(--safe-bot) + 20px)}
+
+/* ── INSTALL BANNER ── */
+#banner{margin:10px 12px 0;background:var(--bg2);border-radius:var(--r);border:0.5px solid rgba(var(--accent-rgb),.22);padding:11px;display:flex;align-items:center;gap:10px}
+#banner.gone{display:none}
+.banner-ico{width:38px;height:38px;border-radius:9px;background:#000;border:0.5px solid var(--sep);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.banner-text h4{font-size:13px;font-weight:600;margin-bottom:1px}
+.banner-text p{font-size:11px;color:var(--text2);line-height:1.4}
+.banner-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;padding:6px;border-radius:8px;flex-shrink:0}
+.banner-close:active{background:var(--bg3)}
+
+/* ── SECTION HEAD ── */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;padding:16px 16px 10px}
+.sec-head h2{font-size:20px;font-weight:700;letter-spacing:-.03em}
+.sec-n{font-size:12px;color:var(--text2)}
+
+/* ── VIDEO GRID ── */
+.v-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 10px}
+@media(min-width:560px){.v-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:820px){.v-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* ── IMAGE GRID (3-col masonry-ish) ── */
+.i-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 0}
+@media(min-width:600px){.i-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:900px){.i-grid{grid-template-columns:repeat(6,1fr)}}
+
+/* ── VIDEO CARD ── */
+.vcard{background:var(--bg2);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;border:0.5px solid var(--sep);animation:pop .3s cubic-bezier(.34,1.4,.64,1) both;-webkit-user-select:none;user-select:none}
+.vcard:active{transform:scale(.95);transition:transform .1s}
+@keyframes pop{from{opacity:0;transform:scale(.88) translateY(8px)}to{opacity:1;transform:none}}
+.vthumb{position:relative;aspect-ratio:16/9;background:var(--bg3);overflow:hidden}
+.vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vthumb-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.vthumb-ph-ico{opacity:.15}
+.vthumb-ph-txt{font-size:9px;color:var(--text3)}
+.t-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.65) 0%,transparent 55%)}
+.play-dot{position:absolute;bottom:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center}
+.play-dot svg{margin-left:2px}
+.src-pill{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);border-radius:999px;padding:2px 7px 2px 5px;display:flex;align-items:center;gap:4px;border:0.5px solid rgba(255,255,255,.1)}
+.src-pill img{width:11px;height:11px;border-radius:2px}
+.src-pill span{font-size:10px;color:rgba(255,255,255,.72)}
+.vcard-body{padding:8px 10px 10px;flex:1;display:flex;flex-direction:column;gap:3px}
+.vcard-title{font-size:12px;font-weight:500;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vcard-foot{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
+.vcard-date{font-size:10px;color:var(--text3)}
+.card-del{background:none;border:none;color:var(--text3);font-size:10px;font-family:var(--font);cursor:pointer;padding:2px 4px;border-radius:5px}
+.card-del:active{color:var(--red)}
+
+/* ── IMAGE CARD ── */
+.icard{position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;animation:pop .3s cubic-bezier(.34,1.4,.64,1) both;background:var(--bg3)}
+.icard img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+.icard:active img{transform:scale(.96)}
+.icard-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%);opacity:0;transition:opacity .2s}
+.icard:hover .icard-overlay{opacity:1}
+.icard-actions{position:absolute;bottom:5px;right:5px;display:flex;gap:4px;opacity:0;transition:opacity .2s}
+.icard:hover .icard-actions{opacity:1}
+.icard-uploading{position:absolute;inset:0;background:rgba(0,0,0,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.spinner{width:24px;height:24px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.icard-act-btn{background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.15);border-radius:7px;padding:5px;cursor:pointer;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center}
+.icard-act-btn:active{opacity:.6}
+
+/* IMGBB badge */
+.imgbb-badge{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.65);border-radius:5px;padding:2px 6px;font-size:9px;color:var(--green);font-weight:600;letter-spacing:.04em;border:0.5px solid rgba(48,209,88,.3)}
+
+/* ── EMPTY ── */
+.empty{grid-column:1/-1;padding:60px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.empty-ico{width:64px;height:64px;border-radius:18px;background:var(--bg2);border:0.5px solid var(--sep);display:flex;align-items:center;justify-content:center}
+.empty h3{font-size:19px;font-weight:600;letter-spacing:-.02em}
+.empty p{font-size:13px;color:var(--text2);max-width:220px;line-height:1.55}
+
+/* ── BOTTOM TAB BAR ── */
+#tab-bar{flex-shrink:0;padding-bottom:var(--safe-bot);background:rgba(28,28,30,.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:0.5px solid var(--sep);display:flex;z-index:20}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 0;background:none;border:none;color:var(--text2);font-family:var(--font);font-size:10px;cursor:pointer;min-height:var(--tab-h);transition:color .15s}
+.tab.on{color:var(--accent)}
+.tab:active{opacity:.6}
+.tab svg{width:24px;height:24px}
+
+/* ── BOTTOM SHEET (generic) ── */
+.sheet-bg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0);pointer-events:none;transition:background .28s}
+.sheet-bg.open{background:rgba(0,0,0,.55);pointer-events:all}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:51;background:var(--bg2);border-radius:20px 20px 0 0;padding-bottom:var(--safe-bot);transform:translateY(110%);transition:transform .36s cubic-bezier(.32,0,.18,1)}
+.sheet.open{transform:translateY(0)}
+.handle{width:36px;height:4px;border-radius:2px;background:var(--bg4);margin:10px auto 0}
+.sheet-ttl{font-size:17px;font-weight:600;text-align:center;padding:14px 16px 0;letter-spacing:-.02em}
+.sheet-body{padding:14px 16px}
+.field-lbl{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;padding-left:2px}
+.ios-input{width:100%;background:var(--bg3);border:none;border-radius:12px;padding:13px 14px;color:var(--text);font-family:var(--font);font-size:16px;outline:none;margin-bottom:12px}
+.ios-input::placeholder{color:var(--text3)}
+.ios-input:focus{outline:2px solid rgba(var(--accent-rgb),.38);outline-offset:-1px}
+.sheet-btns{display:flex;gap:10px;margin-top:2px}
+.btn-cancel{flex:1;background:var(--bg3);border:none;border-radius:14px;padding:15px;color:var(--text);font-family:var(--font);font-size:17px;font-weight:500;cursor:pointer}
+.btn-cancel:active{opacity:.7}
+.btn-save{flex:2;background:var(--accent);border:none;border-radius:14px;padding:15px;color:#000;font-family:var(--font);font-size:17px;font-weight:600;cursor:pointer}
+.btn-save:active{opacity:.8}
+
+/* ── IMAGE ADD SHEET extras ── */
+.img-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.img-opt-btn{
+  background:var(--bg3);border:0.5px solid var(--sep);border-radius:14px;
+  padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  cursor:pointer;font-family:var(--font);color:var(--text);font-size:13px;font-weight:500;
+  transition:all .15s;
+}
+.img-opt-btn:active{opacity:.7;background:var(--bg4)}
+.img-opt-btn svg{width:28px;height:28px;color:var(--accent)}
+.img-opt-btn span{font-size:11px;color:var(--text2);text-align:center;line-height:1.3}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.divider-line{flex:1;height:0.5px;background:var(--sep)}
+.divider-txt{font-size:12px;color:var(--text3)}
+
+/* img preview in sheet */
+#img-preview-wrap{margin-bottom:12px;display:none}
+#img-preview-wrap.show{display:block}
+#img-preview{width:100%;max-height:180px;object-fit:contain;border-radius:10px;background:var(--bg3)}
+.preview-name{font-size:11px;color:var(--text2);margin-top:5px;padding-left:2px}
+
+/* url image picker list */
+#url-imgs-list{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none;padding:2px 0}
+#url-imgs-list::-webkit-scrollbar{display:none}
+.url-img-pick{
+  flex-shrink:0;width:80px;height:80px;border-radius:10px;overflow:hidden;
+  border:2px solid transparent;cursor:pointer;transition:border-color .15s;background:var(--bg3);
+}
+.url-img-pick.sel{border-color:var(--accent)}
+.url-img-pick img{width:100%;height:100%;object-fit:cover;display:block}
+.url-img-pick-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;opacity:.3}
+#fetch-url-btn{
+  width:100%;background:var(--bg3);border:0.5px solid var(--sep);border-radius:12px;
+  padding:11px;color:var(--text2);font-family:var(--font);font-size:14px;
+  cursor:pointer;margin-bottom:10px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+#fetch-url-btn:active{background:var(--bg4)}
+#fetch-url-btn.loading{pointer-events:none;opacity:.6}
+
+/* ── IMAGE VIEWER MODAL ── */
+#img-viewer{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0);
+  display:flex;flex-direction:column;pointer-events:none;
+  transition:background .22s;
+}
+#img-viewer.open{background:rgba(0,0,0,.95);pointer-events:all}
+#img-viewer-inner{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:60px 16px 20px;
+  transform:scale(.9);opacity:0;transition:transform .25s cubic-bezier(.34,1.2,.64,1),opacity .22s;
+}
+#img-viewer.open #img-viewer-inner{transform:scale(1);opacity:1}
+#img-viewer img{max-width:100%;max-height:100%;border-radius:10px;object-fit:contain}
+#img-viewer-bar{
+  position:absolute;top:0;left:0;right:0;
+  padding:calc(var(--safe-top) + 4px) 16px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent);
+}
+#img-viewer-title{font-size:15px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer-btn{
+  background:rgba(44,44,46,.8);border:0.5px solid var(--sep);border-radius:10px;
+  padding:7px 12px;color:var(--text);font-family:var(--font);font-size:13px;font-weight:500;
+  cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;
+  backdrop-filter:blur(8px);
+}
+.viewer-btn:active{opacity:.7}
+.viewer-btn.accent{background:rgba(var(--accent-rgb),.2);color:var(--accent);border-color:rgba(var(--accent-rgb),.3)}
+#viewer-actions{position:absolute;bottom:calc(var(--safe-bot) + 12px);left:0;right:0;display:flex;justify-content:center;gap:10px;padding:0 16px}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;top:calc(var(--safe-top) + 52px);left:50%;
+  transform:translateX(-50%) translateY(-70px);
+  background:rgba(44,44,46,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-radius:999px;padding:9px 20px;font-size:14px;font-weight:500;color:var(--text);
+  z-index:200;white-space:nowrap;border:0.5px solid var(--sep);
+  transition:transform .32s cubic-bezier(.34,1.4,.64,1);
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.ok{color:var(--accent)}
+#toast.err{color:var(--red)}
+#toast.info{color:var(--blue)}
+
+/* uploading overlay on icard */
+.icard-up-overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.icard-up-txt{font-size:10px;color:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div id="top-nav">
+  <div class="nav-bar">
+    <div style="min-width:44px"></div>
+    <div class="nav-title">LinkDrop</div>
+    <button class="nav-icon-btn" id="add-btn-nav" onclick="openAddSheet()" aria-label="Add">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    </button>
+  </div>
+  <div class="search-row">
+    <div class="sf-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>
+      <input class="sf-input" id="search-in" type="search" placeholder="Search" oninput="renderCurrent()">
+    </div>
+  </div>
+  <!-- Page tabs -->
+  <div class="page-tabs">
+    <button class="ptab on" id="ptab-videos" onclick="switchPage('videos',this)">▶ Videos</button>
+    <button class="ptab" id="ptab-images" onclick="switchPage('images',this)">⬛ Images</button>
+  </div>
+</div>
+
+<!-- FILTER CHIPS (videos) -->
+<div class="chips" id="v-chips">
+  <button class="chip on" onclick="setVF('all',this)">All</button>
+  <button class="chip" onclick="setVF('youtube',this)">YouTube</button>
+  <button class="chip" onclick="setVF('vimeo',this)">Vimeo</button>
+  <button class="chip" onclick="setVF('twitter',this)">Twitter / X</button>
+  <button class="chip" onclick="setVF('reddit',this)">Reddit</button>
+  <button class="chip" onclick="setVF('other',this)">Other</button>
+</div>
+
+<!-- FILTER CHIPS (images) -->
+<div class="chips" id="i-chips" style="display:none">
+  <button class="chip on" onclick="setIF('all',this)">All</button>
+  <button class="chip" onclick="setIF('uploaded',this)">Saved to ImgBB</button>
+  <button class="chip" onclick="setIF('local',this)">Local only</button>
+  <button class="chip" onclick="setIF('site',this)">From sites</button>
+</div>
+
+<!-- SCROLL AREA -->
+<div id="scroll">
+  <div id="scroll-inner">
+
+    <!-- Install banner -->
+    <div id="banner">
+      <div class="banner-ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0e040" stroke-width="2" stroke-linecap="round"><path d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.897L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+      </div>
+      <div class="banner-text">
+        <h4>Add to Home Screen</h4>
+        <p>Tap <strong>Share ↑</strong> → <strong>Add to Home Screen</strong></p>
+      </div>
+      <button class="banner-close" onclick="dismissBanner()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Videos section -->
+    <div id="videos-section">
+      <div class="sec-head">
+        <h2 id="v-title">All Videos</h2>
+        <span class="sec-n" id="v-n"></span>
+      </div>
+      <div class="v-grid" id="v-grid"></div>
+    </div>
+
+    <!-- Images section -->
+    <div id="images-section" style="display:none">
+      <div class="sec-head">
+        <h2 id="i-title">All Images</h2>
+        <span class="sec-n" id="i-n"></span>
+      </div>
+      <div class="i-grid" id="i-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOTTOM TAB BAR -->
+<div id="tab-bar">
+  <button class="tab on" onclick="switchPage('videos',null);setTab(this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Videos</span>
+  </button>
+  <button class="tab" onclick="openAddSheet()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>Add</span>
+  </button>
+  <button class="tab" onclick="switchPage('images',null);setTab(this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill="#000"/><path d="M21 15l-5-5L5 21" fill="none" stroke="#000" stroke-width="2"/></svg>
+    <span>Images</span>
+  </button>
+</div>
+
+<!-- ═══ ADD VIDEO SHEET ═══ -->
+<div class="sheet-bg" id="vsheet-bg" onclick="closeVSheet()"></div>
+<div class="sheet" id="vsheet">
+  <div class="handle"></div>
+  <div class="sheet-ttl">Add Video Link</div>
+  <div class="sheet-body">
+    <div class="field-lbl">URL</div>
+    <input class="ios-input" id="url-in" type="url" inputmode="url" placeholder="https://…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="field-lbl">Title (optional)</div>
+    <input class="ios-input" id="vtitle-in" type="text" placeholder="Custom label…" autocomplete="off">
+    <div class="sheet-btns">
+      <button class="btn-cancel" onclick="closeVSheet()">Cancel</button>
+      <button class="btn-save" onclick="addVideo()">Save Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADD IMAGE SHEET ═══ -->
+<div class="sheet-bg" id="isheet-bg" onclick="closeISheet()"></div>
+<div class="sheet" id="isheet">
+  <div class="handle"></div>
+  <div class="sheet-ttl">Save Image</div>
+  <div class="sheet-body">
+
+    <!-- Option buttons -->
+    <div class="img-options">
+      <button class="img-opt-btn" onclick="triggerGallery()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <div>Gallery / Camera</div>
+        <span>Pick from your photos</span>
+      </button>
+      <button class="img-opt-btn" onclick="showUrlImgInput()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+        <div>From Website</div>
+        <span>Paste a page URL</span>
+      </button>
+    </div>
+
+    <!-- Image preview (after gallery pick) -->
+    <div id="img-preview-wrap">
+      <img id="img-preview" src="" alt="">
+      <div class="preview-name" id="preview-name"></div>
+    </div>
+
+    <!-- URL image picker -->
+    <div id="url-img-section" style="display:none">
+      <div class="field-lbl">Website URL</div>
+      <input class="ios-input" id="img-url-in" type="url" inputmode="url" placeholder="https://example.com/page…" autocomplete="off" autocorrect="off" spellcheck="false" style="margin-bottom:8px">
+      <button id="fetch-url-btn" onclick="fetchSiteImages()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>
+        Fetch images from page
+      </button>
+      <div id="url-imgs-list"></div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-txt">OPTIONS</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="field-lbl">Title (optional)</div>
+    <input class="ios-input" id="ititle-in" type="text" placeholder="Label this image…" autocomplete="off">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 2px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">Upload to ImgBB</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:1px">Saves to cloud, enables download anywhere</div>
+      </div>
+      <label class="ios-toggle">
+        <input type="checkbox" id="upload-toggle" checked>
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+
+    <div class="sheet-btns">
+      <button class="btn-cancel" onclick="closeISheet()">Cancel</button>
+      <button class="btn-save" id="img-save-btn" onclick="saveImage()">Save Image</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ IMAGE VIEWER ═══ -->
+<div id="img-viewer">
+  <div id="img-viewer-bar">
+    <button class="viewer-btn" onclick="closeViewer()" style="background:rgba(0,0,0,.5)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="img-viewer-title"></div>
+    <div style="width:44px"></div>
+  </div>
+  <div id="img-viewer-inner">
+    <img id="viewer-img" src="" alt="">
+  </div>
+  <div id="viewer-actions">
+    <button class="viewer-btn accent" id="viewer-download-btn" onclick="downloadViewerImg()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </button>
+    <button class="viewer-btn" id="viewer-open-btn" onclick="openViewerLink()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Open
+    </button>
+    <button class="viewer-btn" id="viewer-del-btn" onclick="deleteViewerImg()" style="color:var(--red)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      Remove
+    </button>
+  </div>
+</div>
+
+<!-- hidden file input -->
+<input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<style>
+/* iOS toggle */
+.ios-toggle{position:relative;display:inline-block;width:51px;height:31px;flex-shrink:0}
+.ios-toggle input{opacity:0;width:0;height:0}
+.toggle-track{
+  position:absolute;inset:0;background:var(--bg4);border-radius:999px;
+  transition:background .2s;cursor:pointer;
+}
+.ios-toggle input:checked+.toggle-track{background:#30d158}
+.toggle-track::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:27px;height:27px;border-radius:50%;background:#fff;
+  transition:transform .2s cubic-bezier(.34,1.4,.64,1);
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+.ios-toggle input:checked+.toggle-track::after{transform:translateX(20px)}
+</style>
+
+<script>
+const IMGBB_KEY = 'f357b1391374418dd02ac3ebd774fbb5';
+const $=id=>document.getElementById(id);
+
+// ── STATE ──
+let videos=[], images=[];
+try{videos=JSON.parse(localStorage.getItem('ld_v')||'[]')}catch(e){}
+try{images=JSON.parse(localStorage.getItem('ld_i')||'[]')}catch(e){}
+
+let curPage='videos', vFilter='all', iFilter='all';
+let curFile=null, curFileB64=null, selectedUrlImg=null;
+let viewerItem=null;
+
+// ── HELPERS ──
+function domain(url){try{return new URL(url).hostname.replace('www.','')}catch(e){return url}}
+function fav(url){try{return'https://www.google.com/s2/favicons?sz=32&domain='+new URL(url).hostname}catch(e){return''}}
+function typeOf(url){
+  if(/youtube\.com|youtu\.be/i.test(url))return'youtube';
+  if(/vimeo\.com/i.test(url))return'vimeo';
+  if(/twitter\.com|x\.com/i.test(url))return'twitter';
+  if(/reddit\.com/i.test(url))return'reddit';
+  return'other';
+}
+function ytThumb(url){
+  try{const u=new URL(url);let id=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v');if(id)return'https://img.youtube.com/vi/'+id+'/hqdefault.jpg'}catch(e){}return null;
+}
+function rel(ts){
+  const s=(Date.now()-ts)/1000;
+  if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';
+  return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function persistV(){localStorage.setItem('ld_v',JSON.stringify(videos))}
+function persistI(){localStorage.setItem('ld_i',JSON.stringify(images))}
+
+// ── TOAST ──
+let _tt;
+function toast(msg,type=''){
+  clearTimeout(_tt);const t=$('toast');t.textContent=msg;t.className='toast show '+type;
+  _tt=setTimeout(()=>t.className='toast',2800);
+}
+
+// ── PAGE SWITCH ──
+function switchPage(page, btn){
+  curPage=page;
+  $('videos-section').style.display=page==='videos'?'':'none';
+  $('images-section').style.display=page==='images'?'':'none';
+  $('v-chips').style.display=page==='videos'?'':'none';
+  $('i-chips').style.display=page==='images'?'':'none';
+  $('ptab-videos').classList.toggle('on',page==='videos');
+  $('ptab-images').classList.toggle('on',page==='images');
+  renderCurrent();
+}
+function setTab(btn){
+  document.querySelectorAll('#tab-bar .tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ── OPEN ADD SHEET ──
+function openAddSheet(){
+  if(curPage==='images') openISheet();
+  else openVSheet();
+}
+
+// ── VIDEO SHEET ──
+function openVSheet(){
+  $('vsheet-bg').classList.add('open');$('vsheet').classList.add('open');
+  setTimeout(()=>$('url-in').focus(),380);
+}
+function closeVSheet(){
+  $('vsheet-bg').classList.remove('open');$('vsheet').classList.remove('open');
+  $('url-in').blur();$('vtitle-in').blur();
+}
+function addVideo(){
+  const u=$('url-in').value.trim(),ti=$('vtitle-in').value.trim();
+  if(!u){toast('Paste a URL first','err');return}
+  try{new URL(u)}catch(e){toast('Not a valid URL','err');return}
+  videos.unshift({id:Date.now(),url:u,title:ti||domain(u),thumb:ytThumb(u),type:typeOf(u),domain:domain(u),fav:fav(u),added:Date.now()});
+  persistV();renderV();closeVSheet();
+  $('url-in').value='';$('vtitle-in').value='';
+  toast('Video saved!','ok');
+}
+
+// ── IMAGE SHEET ──
+function openISheet(){
+  resetISheet();
+  $('isheet-bg').classList.add('open');$('isheet').classList.add('open');
+}
+function closeISheet(){
+  $('isheet-bg').classList.remove('open');$('isheet').classList.remove('open');
+  resetISheet();
+}
+function resetISheet(){
+  curFile=null;curFileB64=null;selectedUrlImg=null;
+  $('img-preview-wrap').classList.remove('show');
+  $('img-preview').src='';$('preview-name').textContent='';
+  $('url-img-section').style.display='none';
+  $('img-url-in').value='';
+  $('url-imgs-list').innerHTML='';
+  $('ititle-in').value='';
+  $('img-save-btn').textContent='Save Image';
+}
+function showUrlImgInput(){
+  $('url-img-section').style.display='';
+  $('img-preview-wrap').classList.remove('show');
+  curFile=null;curFileB64=null;
+  setTimeout(()=>$('img-url-in').focus(),200);
+}
+function triggerGallery(){
+  $('url-img-section').style.display='none';
+  $('file-input').click();
+}
+
+// ── FILE SELECT (gallery/camera) ──
+function handleFileSelect(e){
+  const file=e.target.files[0];if(!file)return;
+  curFile=file;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    curFileB64=ev.target.result.split(',')[1];
+    $('img-preview').src=ev.target.result;
+    $('preview-name').textContent=file.name+' — '+Math.round(file.size/1024)+'KB';
+    $('img-preview-wrap').classList.add('show');
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+
+// ── FETCH IMAGES FROM SITE ──
+async function fetchSiteImages(){
+  const url=$('img-url-in').value.trim();
+  if(!url){toast('Enter a URL first','err');return}
+  const btn=$('fetch-url-btn');
+  btn.classList.add('loading');btn.innerHTML='<div class="spinner" style="width:16px;height:16px;margin:0"></div> Fetching…';
+  $('url-imgs-list').innerHTML='';
+  selectedUrlImg=null;
+
+  try{
+    // Use allorigins proxy to bypass CORS
+    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res=await fetch(proxy);
+    const data=await res.json();
+    const html=data.contents||'';
+
+    // Parse og:image first, then all <img> tags
+    const imgs=[];
+    const ogMatch=html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+                 ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if(ogMatch) imgs.push(ogMatch[1]);
+
+    const imgRe=/<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let m;
+    while((m=imgRe.exec(html))!==null){
+      let src=m[1];
+      if(src.startsWith('//'))src='https:'+src;
+      else if(src.startsWith('/'))src=new URL(url).origin+src;
+      if(src.startsWith('http')&&!src.includes('data:')&&!imgs.includes(src))imgs.push(src);
+      if(imgs.length>=20)break;
+    }
+
+    if(!imgs.length){toast('No images found on that page','err');return}
+
+    $('url-imgs-list').innerHTML=imgs.map((src,i)=>`
+      <div class="url-img-pick" id="upick-${i}" onclick="selectUrlImg('${esc(src)}','upick-${i}')">
+        <img src="${esc(src)}" alt="" onerror="this.parentElement.innerHTML='<div class=url-img-pick-ph><svg width=20 height=20 viewBox=\\'0 0 24 24\\' fill=none stroke=\\'rgba(255,255,255,.3)\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'3\\'/></svg></div>'">
+      </div>`).join('');
+
+  }catch(err){
+    toast('Could not fetch page','err');
+  }finally{
+    btn.classList.remove('loading');
+    btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg> Fetch images from page';
+  }
+}
+
+function selectUrlImg(src, pickId){
+  selectedUrlImg=src;
+  document.querySelectorAll('.url-img-pick').forEach(el=>el.classList.remove('sel'));
+  const el=document.getElementById(pickId);
+  if(el) el.classList.add('sel');
+}
+
+// ── UPLOAD TO IMGBB ──
+async function uploadToImgBB(b64){
+  const fd=new FormData();
+  fd.append('image',b64);
+  const res=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:fd});
+  const data=await res.json();
+  if(data.success) return{url:data.data.url,deleteUrl:data.data.delete_url,displayUrl:data.data.display_url};
+  throw new Error(data.error?.message||'Upload failed');
+}
+
+async function urlToBase64(imgUrl){
+  // fetch via proxy to get base64
+  const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(imgUrl)}`;
+  const res=await fetch(proxy);
+  const blob=await res.blob();
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result.split(',')[1]);
+    r.onerror=reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+// ── SAVE IMAGE ──
+async function saveImage(){
+  const shouldUpload=$('upload-toggle').checked;
+  const title=$('ititle-in').value.trim();
+  const btn=$('img-save-btn');
+
+  // Determine source
+  let sourceB64=curFileB64, sourceUrl=selectedUrlImg, displaySrc=null;
+
+  if(!sourceB64&&!sourceUrl){
+    toast('Pick an image first','err');return;
+  }
+
+  btn.textContent='Saving…';btn.style.opacity='.6';btn.style.pointerEvents='none';
+
+  try{
+    let imgbbUrl=null, imgbbDel=null, localDataUrl=null;
+
+    if(shouldUpload){
+      toast('Uploading to ImgBB…','info');
+      let b64=sourceB64;
+      if(!b64&&sourceUrl){
+        try{ b64=await urlToBase64(sourceUrl); }catch(e){ toast('Could not fetch image for upload','err'); }
+      }
+      if(b64){
+        try{
+          const result=await uploadToImgBB(b64);
+          imgbbUrl=result.url;imgbbDel=result.deleteUrl;
+          toast('Uploaded to ImgBB!','ok');
+        }catch(e){
+          toast('ImgBB upload failed, saved locally','err');
+        }
+      }
+    }
+
+    // Store local preview (small, not full res to save localStorage)
+    if(sourceB64) localDataUrl='data:image/jpeg;base64,'+sourceB64;
+    else if(sourceUrl) localDataUrl=sourceUrl;
+
+    const entry={
+      id:Date.now(),
+      title:title||(sourceUrl?domain(sourceUrl):'Image'),
+      src:imgbbUrl||localDataUrl,
+      localSrc:localDataUrl,
+      imgbbUrl,imgbbDel,
+      sourceUrl,
+      type:imgbbUrl?'uploaded':(sourceUrl?'site':'local'),
+      added:Date.now()
+    };
+    images.unshift(entry);
+    persistI();renderI();closeISheet();
+    toast('Image saved!','ok');
+  }catch(err){
+    toast('Error: '+err.message,'err');
+  }finally{
+    btn.textContent='Save Image';btn.style.opacity='';btn.style.pointerEvents='';
+  }
+}
+
+// ── DELETE VIDEO ──
+function delVideo(id,e){
+  e.preventDefault();e.stopPropagation();
+  videos=videos.filter(l=>l.id!==id);persistV();renderV();toast('Removed');
+}
+
+// ── FILTER ──
+function setVF(f,btn){vFilter=f;document.querySelectorAll('#v-chips .chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderV()}
+function setIF(f,btn){iFilter=f;document.querySelectorAll('#i-chips .chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderI()}
+
+// ── IMAGE VIEWER ──
+function openViewer(item){
+  viewerItem=item;
+  $('viewer-img').src=item.imgbbUrl||item.localSrc||item.src;
+  $('img-viewer-title').textContent=item.title||'Image';
+  $('img-viewer').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeViewer(){
+  $('img-viewer').classList.remove('open');
+  viewerItem=null;
+  document.body.style.overflow='';
+}
+async function downloadViewerImg(){
+  if(!viewerItem)return;
+  const url=viewerItem.imgbbUrl||viewerItem.localSrc||viewerItem.src;
+  if(!url){toast('No image to download','err');return}
+  try{
+    // For imgbb or external URLs, fetch via proxy then download
+    let dlUrl=url;
+    if(!url.startsWith('data:')){
+      toast('Preparing download…','info');
+      const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      const res=await fetch(proxy);
+      const blob=await res.blob();
+      dlUrl=URL.createObjectURL(blob);
+    }
+    const a=document.createElement('a');
+    a.href=dlUrl;
+    a.download=(viewerItem.title||'image').replace(/[^a-z0-9]/gi,'_')+'.jpg';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    if(dlUrl!==url) URL.revokeObjectURL(dlUrl);
+    toast('Downloaded!','ok');
+  }catch(e){
+    // Fallback: open in new tab
+    window.open(url,'_blank');
+  }
+}
+function openViewerLink(){
+  if(!viewerItem)return;
+  const url=viewerItem.imgbbUrl||viewerItem.sourceUrl||viewerItem.src;
+  if(url&&!url.startsWith('data:')) window.open(url,'_blank');
+  else toast('No external URL','err');
+}
+function deleteViewerImg(){
+  if(!viewerItem)return;
+  images=images.filter(i=>i.id!==viewerItem.id);
+  persistI();renderI();closeViewer();toast('Removed');
+}
+
+// ── RENDER VIDEOS ──
+function renderV(){
+  const q=($('search-in').value||'').toLowerCase();
+  let arr=[...videos];
+  if(vFilter!=='all')arr=arr.filter(l=>l.type===vFilter);
+  if(q)arr=arr.filter(l=>l.title.toLowerCase().includes(q)||l.domain.toLowerCase().includes(q));
+  const labels={all:'All Videos',youtube:'YouTube',vimeo:'Vimeo',twitter:'Twitter / X',reddit:'Reddit',other:'Other Sites'};
+  $('v-title').textContent=labels[vFilter]||'Videos';
+  $('v-n').textContent=arr.length?arr.length+' link'+(arr.length!==1?'s':''):'';
+  if(!arr.length){
+    $('v-grid').innerHTML=`<div class="empty"><div class="empty-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5" stroke-linecap="round"><path d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.897L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg></div><h3>${videos.length?'No results':'No videos yet'}</h3><p>${videos.length?'Try another filter':'Tap + to add your first video link'}</p></div>`;
+    return;
+  }
+  $('v-grid').innerHTML=arr.map((l,i)=>{
+    const d=Math.min(i*28,200);
+    const ph=`<div class="vthumb-ph"><svg class="vthumb-ph-ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round"><path d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.897L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg><span class="vthumb-ph-txt">${esc(l.domain)}</span></div>`;
+    const img=l.thumb?`<img src="${esc(l.thumb)}" alt="" loading="lazy" onerror="this.outerHTML=\`${ph.replace(/`/g,"'")}\`">`:ph;
+    return`<a class="vcard" href="${esc(l.url)}" target="_blank" rel="noopener" style="animation-delay:${d}ms">
+      <div class="vthumb">${img}<div class="t-grad"></div><div class="play-dot"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg></div><div class="src-pill"><img src="${esc(l.fav)}" alt="" onerror="this.style.display='none'"><span>${esc(l.domain)}</span></div></div>
+      <div class="vcard-body"><div class="vcard-title">${esc(l.title)}</div><div class="vcard-foot"><span class="vcard-date">${rel(l.added)}</span><button class="card-del" onclick="delVideo(${l.id},event)">Remove</button></div></div>
+    </a>`;
+  }).join('');
+}
+
+// ── RENDER IMAGES ──
+function renderI(){
+  const q=($('search-in').value||'').toLowerCase();
+  let arr=[...images];
+  if(iFilter!=='all')arr=arr.filter(i=>i.type===iFilter);
+  if(q)arr=arr.filter(i=>i.title.toLowerCase().includes(q));
+  const labels={all:'All Images',uploaded:'Saved to ImgBB',local:'Local only',site:'From sites'};
+  $('i-title').textContent=labels[iFilter]||'Images';
+  $('i-n').textContent=arr.length?arr.length+' image'+(arr.length!==1?'s':''):'';
+  if(!arr.length){
+    $('i-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><h3>${images.length?'No results':'No images yet'}</h3><p>${images.length?'Try another filter':'Tap + to save your first image'}</p></div>`;
+    return;
+  }
+  $('i-grid').innerHTML=arr.map((item,i)=>{
+    const d=Math.min(i*20,180);
+    const src=item.imgbbUrl||item.localSrc||item.src||'';
+    const badge=item.imgbbUrl?`<div class="imgbb-badge">ImgBB</div>`:'';
+    return`<div class="icard" style="animation-delay:${d}ms" onclick="openViewer(${JSON.stringify(item).replace(/"/g,'&quot;')})">
+      <img src="${esc(src)}" alt="${esc(item.title)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><rect fill=%22%232c2c2e%22 width=%221%22 height=%221%22/></svg>'">
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderCurrent(){
+  if(curPage==='videos')renderV();
+  else renderI();
+}
+
+// ── MISC ──
+function dismissBanner(){$('banner').classList.add('gone');localStorage.setItem('ld_b','0')}
+if(localStorage.getItem('ld_b')==='0'||window.navigator.standalone)$('banner').classList.add('gone');
+
+// Tap outside viewer to close
+$('img-viewer').addEventListener('click',e=>{if(e.target===e.currentTarget||e.target.id==='img-viewer-inner')closeViewer()});
+
+// Enter key
+['url-in','vtitle-in'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')addVideo()}));
+['img-url-in'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')fetchSiteImages()}));
+
+// SW
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ── INIT ──
+renderV();renderI();
+</script>
+</body>
+</html>
