@@ -1,5 +1,5 @@
-const CACHE = 'linkdrop-v1';
-const ASSETS = ['./linkdrop.html'];
+const CACHE = 'linkdrop-v2';
+const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
